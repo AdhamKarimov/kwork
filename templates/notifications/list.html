@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Bildirishnomalar{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Bildirishnomalar</h1>
+
+<div class="bg-white rounded-lg shadow divide-y">
+    {% for notif in notifications %}
+    <div class="flex justify-between items-center p-4 {{ 'bg-gray-100' if not notif.is_read else '' }}">
+        <div>
+            <p class="font-semibold text-gray-800">{{ notif.get_type_display }}</p>
+            <p class="text-gray-600 text-sm mt-1">{{ notif.message }}</p>
+            <p class="text-gray-400 text-xs mt-1">{{ notif.created_at|date:"d-m-Y H:i" }}</p>
+        </div>
+        {% if not notif.is_read %}
+        <form method="post" action="{% url 'notifications:mark_read' notif.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">O‘qildi</button>
+        </form>
+        {% endif %}
+    </div>
+    {% empty %}
+        <p class="p-4 text-gray-400 text-center">Hozircha bildirishnomalar yo‘q</p>
+    {% endfor %}
+</div>
+{% endblock %}

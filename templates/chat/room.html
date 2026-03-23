@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.order.title }} | Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Scroll past messages to bottom on load */
+        #messages {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="container mx-auto p-4">
+
+    <!-- Order info -->
+    <div class="bg-white rounded-lg shadow p-4 mb-4">
+        <h2 class="text-xl font-bold">{{ room.order.title }}</h2>
+        <p class="text-gray-600">{{ room.order.description }}</p>
+        <div class="mt-2 text-sm text-gray-500">
+            Mijoz: {{ room.client.username }} | Frilanser: {{ room.freelancer.username }} |
+            Status: {{ room.order.get_status_display }}
+            {% if time_left %}
+                | Qolgan vaqt: {{ time_left }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-4">
+
+        <!-- Chat box -->
+        <div class="flex-1 bg-white rounded-lg shadow p-4 flex flex-col">
+            <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-2">
+                {% for msg in messages %}
+                    <div class="flex {{ 'justify-end' if msg.sender == request.user else 'justify-start' }}">
+                        <div class="max-w-xs bg-blue-500 text-white p-2 rounded-lg {{ 'rounded-br-none' if msg.sender == request.user else 'rounded-bl-none' }}">
+                            <p>{{ msg.content }}</p>
+                            <span class="text-xs text-gray-200">{{ msg.created_at|date:"H:i" }}</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-400 text-center">Hozircha xabar yo'q</p>
+                {% endfor %}
+            </div>
+
+            <!-- Send message form -->
+            <form method="post" action="{% url 'chat:send_message' room.id %}" class="flex gap-2">
+                {% csrf_token %}
+                <input name="content" type="text" placeholder="Xabar yozing..." class="flex-1 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <button type="submit" class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600">Yuborish</button>
+            </form>
+        </div>
+
+        <!-- Offers -->
+        <div class="w-full md:w-80 bg-white rounded-lg shadow p-4 flex flex-col gap-4">
+            <h3 class="font-bold text-lg mb-2">Takliflar</h3>
+
+            {% for offer in offers %}
+                <div class="border rounded p-2 {{ 'bg-green-100' if offer.status=='ACCEPTED' else 'bg-gray-50' }}">
+                    <p><strong>{{ offer.sender.username }}</strong> - {{ offer.proposed_price }} so'm | {{ offer.delivery_days }} kun</p>
+                    <p class="text-gray-600">{{ offer.message }}</p>
+                    <p class="text-sm text-gray-500">Status: {{ offer.get_status_display }}</p>
+
+                    {% if request.user == room.client and offer.status == 'PENDING' %}
+                        <form method="post" action="{% url 'chat:accept_offer' offer.id %}" class="flex gap-2 mt-1">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Qabul qilish</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-gray-400">Hozircha taklif yo'q</p>
+            {% endfor %}
+
+            {% if request.user.role == 'FREELANCER' %}
+                <h4 class="font-semibold mt-2">Yangi taklif yuborish</h4>
+                <form method="post" action="{% url 'chat:send_offer' room.id %}" class="flex flex-col gap-2">
+                    {% csrf_token %}
+                    <input type="number" name="price" placeholder="Narx" class="border rounded p-2">
+                    <input type="number" name="days" placeholder="Yetkazish kunlari" class="border rounded p-2">
+                    <textarea name="message" placeholder="Xabar" class="border rounded p-2"></textarea>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Taklif yuborish</button>
+                </form>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // Scroll to bottom
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+</script>
+
+</body>
+</html>
