@@ -1,40 +1,109 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Order
-from django.db.models import Case, When, Value, IntegerField
+from django.contrib import messages
+from django.db.models import Q
+from .models import Order, Tag
+from .forms import OrderCreateForm
+
 
 class OrderListView(View):
     """
-    TZ C-bandi: Daraja baland bo'lsa, e'lonlar yuqorida ko'rinadi.
-    Biz bu yerda frilanserni emas, mijozning e'lonini ko'rsatamiz, 
-    lekin buyurtmalarni yaratilgan vaqti bo'yicha saralaymiz.
+    TZ C-bandi: Daraja baland frilanserlarning e'lonlari yuqorida.
+    Qidiruv va tag bo'yicha filter qo'llab-quvvatlanadi.
     """
     def get(self, request):
-        orders = Order.objects.filter(status=Order.Status.OPEN).order_by('-created_at')
-        return render(request, 'marketplace/order_list.html', {'orders': orders})
+        orders = Order.objects.filter(status=Order.Status.OPEN).select_related('client')
+
+        # Qidiruv
+        query = request.GET.get('q', '').strip()
+        if query:
+            orders = orders.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
+
+        # Tag bo'yicha filter
+        tag_id = request.GET.get('tag')
+        if tag_id:
+            orders = orders.filter(tags__id=tag_id)
+
+        # Byudjet bo'yicha filter
+        min_budget = request.GET.get('min_budget')
+        max_budget = request.GET.get('max_budget')
+        if min_budget:
+            orders = orders.filter(initial_budget__gte=min_budget)
+        if max_budget:
+            orders = orders.filter(initial_budget__lte=max_budget)
+
+        tags = Tag.objects.all()
+        context = {
+            'orders': orders,
+            'tags': tags,
+            'query': query,
+            'selected_tag': tag_id,
+        }
+        return render(request, 'marketplace/order_list.html', context)
+
 
 class OrderCreateView(LoginRequiredMixin, View):
-    def get(self, request):
-        if request.user.role != 'CLIENT':
+    login_url = 'accounts:login'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.role != 'CLIENT':
+            messages.error(request, "Faqat mijozlar buyurtma yarata oladi.")
             return redirect('marketplace:order_list')
-        return render(request, 'marketplace/order_create.html')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        form = OrderCreateForm()
+        return render(request, 'marketplace/order_create.html', {'form': form})
 
     def post(self, request):
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        budget = request.POST.get('budget')
-        
-        Order.objects.create(
-            client=request.user,
-            title=title,
-            description=description,
-            initial_budget=budget,
-            status=Order.Status.OPEN
-        )
-        return redirect('marketplace:order_list')
+        form = OrderCreateForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.client = request.user
+            order.status = Order.Status.OPEN
+            order.save()
+            form.save_m2m()  # teglarni saqlash
+            messages.success(request, "Buyurtma muvaffaqiyatli joylashtirildi!")
+            return redirect('marketplace:order_detail', pk=order.pk)
+        return render(request, 'marketplace/order_create.html', {'form': form})
 
-class OrderDetailView(View):
+
+class OrderDetailView(LoginRequiredMixin, View):
+    login_url = 'accounts:login'
+
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        return render(request, 'marketplace/order_detail.html', {'order': order})
+        context = {
+            'order': order,
+            'is_owner': order.client == request.user,
+            'is_freelancer': request.user.role == 'FREELANCER',
+            'time_remaining': order.time_remaining_seconds,
+        }
+        return render(request, 'marketplace/order_detail.html', context)
+
+
+class OrderCancelView(LoginRequiredMixin, View):
+    """Faqat buyurtma egasi va faqat OPEN holatda bekor qila oladi."""
+    login_url = 'accounts:login'
+
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk, client=request.user)
+        if order.status == Order.Status.OPEN:
+            order.status = Order.Status.CANCELLED
+            order.save()
+            messages.success(request, "Buyurtma bekor qilindi.")
+        else:
+            messages.error(request, "Bu holatdagi buyurtmani bekor qilib bo'lmaydi.")
+        return redirect('marketplace:order_list')
+
+
+class MyOrdersView(LoginRequiredMixin, View):
+    """Mijozning o'z buyurtmalari sahifasi."""
+    login_url = 'accounts:login'
+
+    def get(self, request):
+        orders = Order.objects.filter(client=request.user).order_by('-created_at')
+        return render(request, 'marketplace/my_orders.html', {'orders': orders})

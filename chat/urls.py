@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
 
+app_name = 'chat'
+
+
 urlpatterns = [
     # Chat xonasiga kirish
     path('room/<int:room_id>/', views.ChatRoomDetailView.as_view(), name='room_detail'),

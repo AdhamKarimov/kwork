@@ -33,6 +33,13 @@ INSTALLED_APPS = [
     'reviews'
 ]
 
+CELERY_BEAT_SCHEDULE = {
+    'har-besh-daqiqada-ishla': {
+        'task': 'apps.users.tasks.send_daily_report',  # Task joylashgan yo'l
+        'schedule': 300.0,  # soniya hisobida (yoki crontab ishlatsa bo'ladi)
+    },
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
