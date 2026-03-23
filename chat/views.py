@@ -49,3 +49,25 @@ class AcceptOfferView(LoginRequiredMixin, View):
             # U yerda order.status = IN_PROGRESS va deadline = now + days mantiqi bor
             offer.accept()
         return redirect('chat:room_detail', room_id=offer.room.id)
+    
+class CreateChatRoomView(LoginRequiredMixin, View):
+    """
+    TZ: Frilanser buyurtma bo'yicha muloqot boshlashi uchun.
+    Agar xona oldin yaratilgan bo'lsa, mavjudiga yo'naltiradi.
+    """
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        
+        if order.client == request.user:
+            return redirect('marketplace:order_detail', pk=order_id)
+
+        if request.user.role != 'FREELANCER':
+            return redirect('marketplace:order_detail', pk=order_id)
+
+        room, created = ChatRoom.objects.get_or_create(
+            order=order,
+            freelancer=request.user,
+            defaults={'client': order.client}
+        )
+        
+        return redirect('chat:room_detail', room_id=room.id)
