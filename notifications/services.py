@@ -29,28 +29,46 @@ def notify_order_completed(freelancer, order_title, order_pk):
     )
 
 
-def notify_offer_received(client, freelancer_name, order_title, order_pk):
+def notify_offer_received(client, freelancer_name, order_title, order_pk, room_pk=None):
+    """Mijozga: frilanser taklif yubordi — chatga o'tish linki."""
+    if room_pk:
+        link = reverse('chat:room_detail', kwargs={'room_id': room_pk})
+    else:
+        link = reverse('marketplace:order_detail', kwargs={'pk': order_pk})
+
     Notification.objects.create(
         user    = client,
         type    = Notification.Type.OFFER_RECEIVED,
-        message = f'{freelancer_name} "{order_title}" buyurtmangizga murojaat qildi.',
-        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+        message = f'📩 {freelancer_name} "{order_title}" buyurtmangizga taklif yubordi.',
+        link    = link,
     )
 
 
-def notify_offer_accepted(freelancer, order_title, order_pk):
+def notify_offer_accepted(freelancer, order_title, order_pk, room_pk=None):
+    """Frilansерga: taklif qabul qilindi — chatga o'tish linki."""
+    if room_pk:
+        link = reverse('chat:room_detail', kwargs={'room_id': room_pk})
+    else:
+        link = reverse('marketplace:order_detail', kwargs={'pk': order_pk})
+
     Notification.objects.create(
         user    = freelancer,
         type    = Notification.Type.OFFER_ACCEPTED,
-        message = f'Taklifingiz qabul qilindi! "{order_title}" loyihasi boshlandi.',
-        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+        message = f'✅ Taklifingiz qabul qilindi! "{order_title}" loyihasi boshlandi.',
+        link    = link,
     )
 
 
-def notify_offer_rejected(freelancer, order_title, order_pk):
+def notify_offer_rejected(freelancer, order_title, order_pk, room_pk=None):
+    """Frilansерga: taklif rad etildi — chatga o'tish linki."""
+    if room_pk:
+        link = reverse('chat:room_detail', kwargs={'room_id': room_pk})
+    else:
+        link = reverse('marketplace:order_detail', kwargs={'pk': order_pk})
+
     Notification.objects.create(
         user    = freelancer,
         type    = Notification.Type.OFFER_REJECTED,
-        message = f'"{order_title}" buyurtmasi uchun taklifingiz rad etildi.',
-        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+        message = f'❌ "{order_title}" buyurtmasi uchun taklifingiz rad etildi.',
+        link    = link,
     )

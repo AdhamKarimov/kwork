@@ -98,11 +98,18 @@
 
                                 <div class="flex items-center gap-4 pt-4">
                                     <div class="flex items-center gap-2">
-                                        <img src="https://ui-avatars.com/api/?name={{ order.owner.full_name|urlencode }}&background=0f172a&color=3b82f6" class="w-6 h-6 rounded-lg">
-                                        <span class="text-xs text-gray-500 font-bold uppercase">{{ order.owner.full_name }}</span>
+                                        <div class="w-6 h-6 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 font-black text-xs">
+                                            {{ order.client.username|slice:":1"|upper }}
+                                        </div>
+                                        <span class="text-xs text-gray-500 font-bold uppercase">
+                                            {{ order.client.get_full_name|default:order.client.username }}
+                                        </span>
                                     </div>
                                     <div class="h-1 w-1 bg-gray-700 rounded-full"></div>
-                                    <span class="text-xs text-gray-500 font-bold uppercase">📩 {{ order.offers.count|default:"0" }} ta taklif</span>
+                                    {# TUZATISH: chat_rooms orqali takliflar sanasi #}
+                                    <span class="text-xs text-gray-500 font-bold uppercase">
+                                        📩 {{ order.total_offers }} ta taklif
+                                    </span>
                                 </div>
                             </div>
 

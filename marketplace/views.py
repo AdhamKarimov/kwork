@@ -16,7 +16,9 @@ class OrderListView(View):
     Qidiruv va tag bo'yicha filter qo'llab-quvvatlanadi.
     """
     def get(self, request):
-        orders = Order.objects.filter(status=Order.Status.OPEN).select_related('client')
+        orders = Order.objects.filter(
+            status__in=[Order.Status.OPEN, Order.Status.IN_NEGOTIATION]
+        ).select_related('client').prefetch_related('tags', 'chat_rooms__offers')
 
         # Qidiruv
         query = request.GET.get('q', '').strip()
@@ -38,6 +40,12 @@ class OrderListView(View):
         if max_budget:
             orders = orders.filter(initial_budget__lte=max_budget)
 
+        # Har bir order uchun takliflar sonini hisoblash
+        for order in orders:
+            order.total_offers = sum(
+                room.offers.count() for room in order.chat_rooms.all()
+            )
+
         tags = Tag.objects.all()
         context = {
             'orders': orders,
@@ -46,7 +54,6 @@ class OrderListView(View):
             'selected_tag': tag_id,
         }
         return render(request, 'marketplace/order_list.html', context)
-
 
 class OrderCreateView(LoginRequiredMixin, View):
     login_url = 'accounts:login'
@@ -104,11 +111,12 @@ class OrderCancelView(LoginRequiredMixin, View):
 
 
 class MyOrdersView(LoginRequiredMixin, View):
-    """Mijozning o'z buyurtmalari sahifasi."""
-    login_url = 'accounts:login'
-
     def get(self, request):
-        orders = Order.objects.filter(client=request.user).order_by('-created_at')
+        orders = Order.objects.filter(
+            client=request.user
+        ).prefetch_related(
+            'chat_rooms__offers__sender'  # takliflarni oldindan yuklash
+        ).order_by('-created_at')
         return render(request, 'marketplace/my_orders.html', {'orders': orders})
 
 

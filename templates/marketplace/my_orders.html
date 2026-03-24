@@ -62,7 +62,7 @@
                                 <form method="POST" action="{% url 'marketplace:order_delete' order.pk %}" class="inline">
                                     {% csrf_token %}
                                     <button type="submit"
-                                            onclick="return confirm('Haqiqatan ham o‘chirmoqchimisiz?')"
+                                            onclick="return confirm('Haqiqatan ham o\'chirmoqchimisiz?')"
                                             class="bg-white/5 border border-white/10 text-red-500 p-4 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-lg" title="O'chirish">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -73,6 +73,73 @@
                         </div>
                     </div>
                 </div>
+
+                {# ====== TAKLIFLAR BLOKI ====== #}
+                {% for room in order.chat_rooms.all %}
+                    {% if room.offers.all %}
+                    <div class="mt-6 pt-6 border-t border-white/5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                💬 Frilanser:
+                                <span class="text-blue-400">{{ room.freelancer.get_full_name|default:room.freelancer.username }}</span>
+                            </h3>
+                            <a href="{% url 'chat:room_detail' room.id %}"
+                               class="text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors">
+                                Chatga o'tish →
+                            </a>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {% for offer in room.offers.all %}
+                            <div class="p-4 rounded-2xl border transition-all
+                                {% if offer.status == 'ACCEPTED' %}bg-green-500/5 border-green-500/30
+                                {% elif offer.status == 'REJECTED' %}bg-red-500/5 border-red-500/20 opacity-60
+                                {% elif offer.status == 'EXPIRED' %}bg-white/2 border-white/5 opacity-40
+                                {% else %}bg-slate-900/40 border-white/10{% endif %}">
+
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-white font-black text-lg">${{ offer.proposed_price }}</span>
+                                    <span class="text-gray-500 text-[10px] font-bold uppercase">{{ offer.delivery_days }} kun</span>
+                                </div>
+
+                                {% if offer.message %}
+                                <p class="text-gray-400 text-xs italic mb-3 line-clamp-2">"{{ offer.message }}"</p>
+                                {% endif %}
+
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[9px] font-black uppercase tracking-widest
+                                        {% if offer.status == 'ACCEPTED' %}text-green-500
+                                        {% elif offer.status == 'REJECTED' %}text-red-400
+                                        {% elif offer.status == 'EXPIRED' %}text-gray-600
+                                        {% else %}text-yellow-500{% endif %}">
+                                        ● {{ offer.status }}
+                                    </span>
+
+                                    {% if offer.status == 'PENDING' %}
+                                    <div class="flex gap-2">
+                                        <form method="POST" action="{% url 'chat:accept_offer' offer.id %}">
+                                            {% csrf_token %}
+                                            <button class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold transition-all">
+                                                ✓ Qabul
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{% url 'chat:reject_offer' offer.id %}">
+                                            {% csrf_token %}
+                                            <button class="bg-white/5 hover:bg-red-500/20 text-red-400 px-3 py-1 rounded-lg text-[10px] font-bold transition-all border border-white/5">
+                                                ✕ Rad
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {# ====== TAKLIFLAR BLOKI TUGADI ====== #}
+
             </div>
         {% empty %}
             <div class="text-center py-24 glass-card rounded-[3rem] border border-white/5">
