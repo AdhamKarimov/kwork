@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Loyihani ko'rish: {{ order.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-10">
+
+    <div class="glass-card p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group mb-8">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full group-hover:bg-blue-600/20 transition-all duration-700"></div>
+
+        <div class="relative z-10">
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+                <span class="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+                    {{ order.status }}
+                </span>
+                {% for tag in order.tags.all %}
+                <span class="px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-gray-400 text-[10px] font-bold">
+                    #{{ tag.name }}
+                </span>
+                {% endfor %}
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+                <h1 class="text-3xl md:text-5xl font-black text-white leading-tight flex-1">
+                    {{ order.title }}
+                </h1>
+                <div class="text-left md:text-right bg-white/5 p-6 rounded-[2rem] border border-white/5 min-w-[200px]">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Taklif qilingan byudjet</p>
+                    <span class="text-4xl font-black text-blue-500">${{ order.initial_budget }}</span>
+                </div>
+            </div>
+
+            <div class="prose prose-invert max-w-none mb-10">
+                <p class="text-gray-400 text-lg leading-relaxed whitespace-pre-line">
+                    {{ order.description }}
+                </p>
+            </div>
+
+            {% if time_remaining %}
+            <div class="flex items-center gap-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl mb-8 w-fit">
+                <span class="text-2xl">⏳</span>
+                <div>
+                    <p class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Tugashiga qoldi:</p>
+                    <div id="timer" class="text-white font-black">Hisoblanmoqda...</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex flex-wrap gap-4 pt-8 border-t border-white/5">
+
+                {% if is_owner and order.status == 'OPEN' %}
+                    <a href="{% url 'marketplace:order_edit' order.pk %}"
+                       class="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 flex items-center gap-2">
+                        <span>✏️</span> Tahrirlash
+                    </a>
+
+                    <form method="POST" action="{% url 'marketplace:order_delete' order.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                onclick="return confirm('Haqiqatan ham ushbu loyihani o\'chirib tashlamoqchimisiz?')"
+                                class="bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 flex items-center gap-2">
+                            <span>🗑️</span> O'chirish
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{% url 'marketplace:order_cancel' order.id %}" class="inline">
+                        {% csrf_token %}
+                        <button class="bg-white/5 border border-white/10 text-gray-400 hover:bg-gray-800 px-8 py-4 rounded-2xl font-bold transition-all">
+                            Loyiha to'xtatish
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if is_freelancer and order.status == 'OPEN' %}
+                <form method="POST" action="{% url 'chat:open_chat' order.id %}" class="inline w-full md:w-auto">
+                    {% csrf_token %}
+                    <button class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-3">
+                        <span>💬</span> Bog'lanish va taklif berish
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if is_owner and order.status == 'IN_PROGRESS' %}
+                <form method="POST" action="{% url 'marketplace:order_complete' order.id %}" class="inline">
+                    {% csrf_token %}
+                    <button class="bg-green-600 hover:bg-green-500 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-green-600/20 transition-all active:scale-95">
+                        Ishni qabul qilish va yakunlash
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if is_owner and order.status == 'COMPLETED' and not order.review %}
+    <div class="glass-card p-10 rounded-[3rem] border border-white/10 shadow-2xl mt-8 animate-in fade-in slide-in-from-bottom-4">
+        <h3 class="text-2xl font-black text-white mb-6 flex items-center gap-3">
+            <span>⭐</span> Ijrochini baholang
+        </h3>
+
+        <form method="POST" action="{% url 'reviews:create_review' order.id %}" class="space-y-6">
+            {% csrf_token %}
+            <div class="flex gap-4 p-4 bg-white/5 rounded-2xl w-fit" id="stars">
+                {% for i in "12345" %}
+                <span class="text-4xl cursor-pointer star transition-all hover:scale-125 text-gray-600" data-value="{{ i }}">☆</span>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="stars" id="starsInput" required>
+
+            <textarea name="comment" rows="4" placeholder="Ijrochi haqida o'z fikringizni yozing..."
+                      class="w-full bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] text-white outline-none focus:border-blue-500/50 transition-all resize-none"></textarea>
+
+            <button class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95">
+                Bahoni yuborish
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if order.review %}
+    <div class="glass-card p-10 rounded-[3rem] border border-blue-500/20 bg-blue-500/5 shadow-2xl mt-8">
+        <div class="flex justify-between items-start mb-6">
+            <h3 class="text-xl font-bold text-white italic">Mijoz fikri</h3>
+            <div class="text-yellow-500 text-2xl tracking-widest">
+                {% for i in "12345"|slice:order.review.stars %}⭐{% endfor %}
+            </div>
+        </div>
+        <p class="text-gray-300 text-lg leading-relaxed italic mb-6">
+            "{{ order.review.comment }}"
+        </p>
+        <span class="text-xs text-gray-500 font-bold uppercase tracking-widest">
+            📅 {{ order.review.created_at|date:"d M Y" }}
+        </span>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+// ⏳ TIMER LOGIC
+{% if time_remaining %}
+let seconds = {{ time_remaining }};
+function updateTimer() {
+    if (seconds <= 0) {
+        document.getElementById("timer").innerText = "Vaqt tugadi";
+        return;
+    }
+    let d = Math.floor(seconds / 86400);
+    let h = Math.floor((seconds % 86400) / 3600);
+    let m = Math.floor((seconds % 3600) / 60);
+    let s = Math.floor(seconds % 60);
+    document.getElementById("timer").innerText = `${d}k ${h}s ${m}m ${s}s`;
+    seconds--;
+}
+setInterval(updateTimer, 1000);
+updateTimer();
+{% endif %}
+
+// ⭐ STAR RATING SYSTEM
+const stars = document.querySelectorAll(".star");
+const input = document.getElementById("starsInput");
+
+stars.forEach(star => {
+    star.addEventListener("click", () => {
+        let value = star.dataset.value;
+        input.value = value;
+        stars.forEach(s => {
+            s.innerText = s.dataset.value <= value ? "⭐" : "☆";
+            s.classList.toggle("text-yellow-500", s.dataset.value <= value);
+            s.classList.toggle("text-gray-600", s.dataset.value > value);
+        });
+    });
+});
+</script>
+{% endblock %}

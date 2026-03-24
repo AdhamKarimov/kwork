@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -5,6 +6,8 @@ from django.contrib import messages
 from django.db.models import Q
 from .models import Order, Tag
 from .forms import OrderCreateForm
+from django.views.generic.edit import UpdateView, DeleteView
+from django.urls import reverse_lazy
 
 
 class OrderListView(View):
@@ -144,4 +147,39 @@ class OrderCompleteView(LoginRequiredMixin, View):
         messages.success(request, 'Buyurtma muvaffaqiyatli yakunlandi!')
         return redirect('marketplace:order_detail', pk=pk)
 
+class OrderEditView(LoginRequiredMixin, UpdateView):
+    model = Order
+    form_class = OrderCreateForm
+    template_name = 'marketplace/order_edit.html'
+    login_url = 'accounts:login'
+
+    def get_object(self, queryset=None):
+        order = super().get_object(queryset)
+        if order.client != self.request.user or order.status != Order.Status.OPEN:
+            raise PermissionDenied('Faqat sizning ochiq loyihalaringizni tahrirlashingiz mumkin.')
+        return order
+
+    def form_valid(self, form):
+        messages.success(self.request, "Buyurtma muvaffaqiyatli tahrirlandi!")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('marketplace:my_orders')
+
+class OrderDeleteView(LoginRequiredMixin, DeleteView):
+    model = Order
+    login_url = 'accounts:login'
+
+    def get_object(self, queryset=None):
+        order = super().get_object(queryset)
+        if order.client != self.request.user or order.status != Order.Status.OPEN:
+            raise PermissionDenied('Faqat sizning ochiq loyihalaringizni o‘chirishingiz mumkin.')
+        return order
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Buyurtma o‘chirildi!")
+        return super().delete(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('marketplace:my_orders')
 

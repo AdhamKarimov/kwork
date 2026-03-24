@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Bildirishnomalar{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+
+    <!-- HEADER -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold">🔔 Bildirishnomalar</h2>
+
+        <form method="POST" action="{% url 'notifications:mark_all_read' %}">
+            {% csrf_token %}
+            <button class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                Hammasini o‘qish
+            </button>
+        </form>
+    </div>
+
+    <!-- LIST -->
+    <div class="space-y-3">
+
+        {% for notif in notifications %}
+        <div class="group flex justify-between items-center p-4 rounded-xl shadow-sm border transition hover:shadow-md
+
+        {% if notif.type == 'OFFER_ACCEPTED' %}bg-green-50 border-green-200
+        {% elif notif.type == 'OFFER_REJECTED' %}bg-red-50 border-red-200
+        {% elif notif.type == 'OFFER_RECEIVED' %}bg-blue-50 border-blue-200
+        {% elif notif.type == 'DEADLINE_SOON' %}bg-yellow-50 border-yellow-200
+        {% elif notif.type == 'DEADLINE_PASSED' %}bg-orange-50 border-orange-200
+        {% else %}bg-white{% endif %}
+
+        {% if not notif.is_read %}ring-2 ring-blue-200{% endif %}
+        ">
+
+            <!-- LEFT -->
+            <div class="flex items-start gap-3">
+
+                <!-- ICON -->
+                <div class="text-xl">
+                    {% if notif.type == 'OFFER_ACCEPTED' %}✅
+                    {% elif notif.type == 'OFFER_REJECTED' %}❌
+                    {% elif notif.type == 'OFFER_RECEIVED' %}📩
+                    {% elif notif.type == 'DEADLINE_SOON' %}⏳
+                    {% elif notif.type == 'DEADLINE_PASSED' %}⚠️
+                    {% else %}🔔
+                    {% endif %}
+                </div>
+
+                <!-- TEXT -->
+                <div>
+                    <p class="font-medium text-gray-800">
+                        {{ notif.message }}
+                    </p>
+
+                    <span class="text-sm text-gray-500">
+                        {{ notif.created_at|date:"d M Y • H:i" }}
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- RIGHT ACTIONS -->
+            <div class="flex items-center gap-3">
+
+                {% if notif.link %}
+                <a href="{{ notif.link }}"
+                   class="text-blue-500 text-sm hover:underline">
+                    Ko‘rish
+                </a>
+                {% endif %}
+
+                {% if not notif.is_read %}
+                <form method="POST" action="{% url 'notifications:mark_read' notif.id %}">
+                    {% csrf_token %}
+                    <button class="text-green-500 hover:scale-110 transition">
+                        ✔
+                    </button>
+                </form>
+                {% endif %}
+
+            </div>
+
+        </div>
+        {% empty %}
+
+        <!-- EMPTY STATE -->
+        <div class="text-center py-10 text-gray-500">
+            <div class="text-5xl mb-3">📭</div>
+            <p>Hozircha bildirishnomalar yo‘q</p>
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

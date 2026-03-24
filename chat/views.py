@@ -7,6 +7,16 @@ from django.utils import timezone
 from .models import ChatRoom, Message, Offer
 from marketplace.models import Order
 
+class MyOffersView(LoginRequiredMixin, View):
+    login_url = 'accounts:login'
+
+    def get(self, request):
+        if request.user.role != 'FREELANCER':
+            return redirect('marketplace:order_list')
+
+        offers = request.user.sent_offers.select_related('room__order').order_by('-created_at')
+        return render(request, 'chat/my_offers.html', {'offers': offers})
+
 
 class ChatRoomDetailView(LoginRequiredMixin, View):
     """Chat xonasi — tepada loyiha tafsilotlari, pastda savdolashish bloki."""
@@ -81,6 +91,13 @@ class SendOfferView(LoginRequiredMixin, View):
             proposed_price = proposed_price,
             delivery_days  = delivery_days,
             message        = message,
+        )
+        from notifications.services import notify_offer_received
+        notify_offer_received(
+            client=room.client,  # order/client egasi
+            freelancer_name=request.user.full_name,
+            order_title=room.order.title,
+            order_pk=room.order.pk,
         )
         return redirect('chat:room_detail', room_id=room_id)
 

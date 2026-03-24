@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Freelance.uz - Loyihalar bozori{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 md:px-6">
+
+    <div class="mb-10">
+        <h1 class="text-3xl md:text-5xl font-black text-white tracking-tighter">
+            Loyihalar <span class="text-blue-500">bozori</span>
+        </h1>
+        <p class="text-gray-500 mt-2">O'zingizga mos loyihani toping va taklif yuboring</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-10">
+
+        <aside class="w-full lg:w-1/4">
+            <div class="glass-card p-8 rounded-[2.5rem] sticky top-28 shadow-2xl overflow-hidden relative group border border-white/10">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 blur-[50px] rounded-full group-hover:bg-blue-600/20 transition-all"></div>
+
+                <h3 class="text-xl font-black text-white mb-8 flex items-center gap-3">
+                    <span class="text-blue-500 text-2xl">🎯</span> Filtrlar
+                </h3>
+
+                <form method="GET" action="{% url 'marketplace:order_list' %}" class="space-y-8">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] ml-1">Kalit so'z</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+                            <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Qidirish..."
+                                   class="w-full bg-slate-900/60 border border-white/10 p-4 pl-12 rounded-2xl text-white text-sm outline-none focus:border-blue-500/50 transition-all">
+                        </div>
+                    </div>
+
+                    {% if tags %}
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] ml-1">Yo'nalishlar</label>
+                        <div class="grid grid-cols-1 gap-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                            <label class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-white/5 group">
+                                <input type="radio" name="tag" value="" {% if not request.GET.tag %}checked{% endif %} class="w-4 h-4 accent-blue-600">
+                                <span class="text-sm text-gray-400 group-hover:text-white transition">Barchasi</span>
+                            </label>
+                            {% for tag in tags %}
+                                <label class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-white/5 group">
+                                    <input type="radio" name="tag" value="{{ tag.id }}" {% if request.GET.tag == tag.id|stringformat:"i" %}checked{% endif %} class="w-4 h-4 accent-blue-600">
+                                    <span class="text-sm text-gray-400 group-hover:text-white transition">{{ tag.name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] ml-1">Byudjet ($)</label>
+                        <div class="flex items-center gap-3">
+                            <input type="number" name="min_budget" value="{{ request.GET.min_budget }}" placeholder="Min" class="w-1/2 bg-slate-900/60 border border-white/10 p-4 rounded-2xl text-white text-sm outline-none focus:border-blue-500/50">
+                            <input type="number" name="max_budget" value="{{ request.GET.max_budget }}" placeholder="Max" class="w-1/2 bg-slate-900/60 border border-white/10 p-4 rounded-2xl text-white text-sm outline-none focus:border-blue-500/50">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-600/20 transition-all active:scale-95 text-sm uppercase tracking-widest">
+                        Natijalarni ko'rsat
+                    </button>
+
+                    {% if request.GET.q or request.GET.tag or request.GET.min_budget %}
+                        <a href="{% url 'marketplace:order_list' %}" class="block text-center text-xs text-gray-500 hover:text-white underline">Filtrni tozalash</a>
+                    {% endif %}
+                </form>
+            </div>
+        </aside>
+
+        <div class="flex-1 space-y-6">
+
+            {% if orders %}
+                <div class="flex justify-between items-center px-4 mb-2">
+                    <h2 class="text-xl font-bold text-white">Topilgan loyihalar: <span class="text-blue-500">{{ orders.count }}</span></h2>
+                </div>
+
+                {% for order in orders %}
+                    <div class="glass-card p-6 md:p-10 rounded-[3rem] group hover:bg-slate-800/60 transition-all border border-white/5 hover:border-blue-500/30">
+                        <div class="flex flex-col md:flex-row justify-between items-start gap-8">
+                            <div class="flex-1 space-y-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-blue-600/10 text-blue-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-blue-500/20 uppercase tracking-widest">
+                                        {{ order.tags.first.name|default:"Umumiy" }}
+                                    </span>
+                                    <span class="text-gray-600 text-[10px] font-bold uppercase tracking-widest">
+                                        🕒 {{ order.created_at|timesince }} oldin
+                                    </span>
+                                </div>
+
+                                <h2 class="text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors leading-tight">
+                                    {{ order.title }}
+                                </h2>
+
+                                <p class="text-gray-400 line-clamp-2 text-sm md:text-base leading-relaxed">
+                                    {{ order.description }}
+                                </p>
+
+                                <div class="flex items-center gap-4 pt-4">
+                                    <div class="flex items-center gap-2">
+                                        <img src="https://ui-avatars.com/api/?name={{ order.owner.full_name|urlencode }}&background=0f172a&color=3b82f6" class="w-6 h-6 rounded-lg">
+                                        <span class="text-xs text-gray-500 font-bold uppercase">{{ order.owner.full_name }}</span>
+                                    </div>
+                                    <div class="h-1 w-1 bg-gray-700 rounded-full"></div>
+                                    <span class="text-xs text-gray-500 font-bold uppercase">📩 {{ order.offers.count|default:"0" }} ta taklif</span>
+                                </div>
+                            </div>
+
+                            <div class="w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
+                                <div class="text-left md:text-right">
+                                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Byudjet</p>
+                                    <span class="text-3xl font-black text-white">
+                                        ${{ order.initial_budget }}
+                                    </span>
+                                </div>
+                                <a href="{% url 'marketplace:order_detail' order.id %}"
+                                   class="bg-white/5 border border-white/10 text-white px-10 py-4 rounded-[1.5rem] font-black text-sm hover:bg-blue-600 hover:border-blue-600 transition-all shadow-xl hover:shadow-blue-600/20 whitespace-nowrap">
+                                    Ko'rish →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="py-24 text-center glass-card rounded-[3rem] border border-white/10 shadow-2xl">
+                    <div class="text-6xl mb-6 opacity-30">🔍</div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Hech narsa topilmadi</h2>
+                    <p class="text-gray-500 mb-8">Qidiruv so'rovini o'zgartirib ko'ring yoki filtrlarni tozalang.</p>
+                    <a href="{% url 'marketplace:order_list' %}" class="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl hover:bg-white/10 transition-all">Barcha loyihalarga qaytish</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

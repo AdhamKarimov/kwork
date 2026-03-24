@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Freelance.uz - Professional Marketplace{% endblock %}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root { --primary-blue: #1e40af; --deep-dark: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f8fafc; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+        .logo-font { font-family: 'Montserrat', sans-serif; }
+        .glass-nav { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        input:focus { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); background: rgba(15, 23, 42, 0.8) !important; }
+        .dropdown-menu { transform-origin: top right; animation: slideIn 0.25s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+
+<body class="bg-[#0f172a]">
+
+<nav class="glass-nav px-6 md:px-16 py-4 flex justify-between items-center sticky top-0 z-50">
+    <a href="/" class="logo-font text-2xl font-extrabold tracking-tighter flex items-center gap-2 group">
+        <span class="bg-gradient-to-br from-blue-600 to-cyan-400 text-white p-1.5 rounded-xl shadow-lg shadow-blue-500/20 group-hover:rotate-12 transition-transform">🚀</span>
+        <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            Freelance<span class="text-blue-500">.uz</span>
+        </span>
+    </a>
+
+    <div class="flex items-center gap-4 md:gap-8">
+        {% if request.user.is_authenticated %}
+            <div class="hidden lg:flex items-center gap-3">
+                {% if request.user.role == "CLIENT" %}
+                    <a href="{% url 'marketplace:order_list' %}" class="px-4 py-2 text-blue-400 bg-blue-500/10 rounded-xl font-medium">Barcha buyurtmalar</a>
+                    <a href="{% url 'marketplace:my_orders' %}" class="px-4 py-2 text-gray-400 hover:text-white transition">Loyihalarim</a>
+                    <a href="{% url 'marketplace:order_create' %}"  class="ml-4 bg-blue-600 hover:bg-blue-50 text-white px-5 py-2 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95">+ Yangi loyiha</a>
+                {% else %}
+                    <a href="{% url 'marketplace:order_list' %}" class="px-4 py-2 text-blue-400 bg-blue-500/10 rounded-xl font-medium">Ish topish</a>
+                    <a href="{% url 'chat:my_offers' %}" class="px-4 py-2 text-gray-400 hover:text-white transition">Mening takliflarim</a>
+                {% endif %}
+            </div>
+
+            <div class="relative">
+                <button onclick="toggleElement('notifDropdown')" class="p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-700 transition relative border border-white/5">
+                    <span class="text-xl">🔔</span>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0f172a]">1</span>
+                </button>
+                <div id="notifDropdown" class="hidden dropdown-menu absolute right-0 mt-4 w-80 glass-card rounded-2xl overflow-hidden shadow-2xl z-50">
+                    <div class="p-4 border-b border-white/10 flex justify-between bg-white/5">
+                        <h3 class="font-bold text-sm text-white">Bildirishnomalar</h3>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto p-2">
+                        <div class="p-3 hover:bg-white/5 rounded-xl transition cursor-pointer">
+                            <p class="text-sm text-gray-200">Xush kelibsiz! Profilingizni to'ldiring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button onclick="toggleElement('profileDropdown')" class="flex items-center gap-3 p-1.5 pr-4 rounded-2xl bg-slate-800/50 hover:bg-slate-700 border border-white/5 transition">
+                    <img src="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}https://ui-avatars.com/api/?name={{ request.user.full_name }}&background=2563eb&color=fff{% endif %}" class="w-10 h-10 rounded-xl object-cover">
+                    <div class="hidden md:block text-left">
+                        <p class="text-xs font-bold text-white truncate w-20 leading-none mb-1">{{ request.user.full_name|truncatechars:12 }}</p>
+                        <p class="text-[10px] text-blue-400 uppercase font-bold tracking-widest">{{ request.user.role }}</p>
+                    </div>
+                </button>
+                <div id="profileDropdown" class="hidden dropdown-menu absolute right-0 mt-4 w-52 glass-card rounded-2xl overflow-hidden shadow-2xl">
+                    <a href="{% url 'accounts:profile_detail' request.user.id %}" class="flex items-center gap-3 px-5 py-4 hover:bg-white/5 text-gray-300 transition">
+                        <span>👤</span> Profilim
+                    </a>
+                    <a href="{% url 'accounts:profile_edit' %}" class="flex items-center gap-3 px-5 py-4 hover:bg-white/5 text-gray-300 transition">
+                        <span>⚙️</span> Sozlamalar
+                    </a>
+                    <div class="border-t border-white/5"></div>
+                    <form action="{% url 'accounts:logout' %}" method="POST" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full flex items-center gap-3 px-5 py-4 hover:bg-red-500/10 text-red-400 transition text-left">
+                            <span>🚪</span> Chiqish
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="flex items-center gap-3">
+                <a href="{% url 'accounts:login' %}" class="text-gray-400 font-medium px-4 py-2 hover:text-white transition">Kirish</a>
+                <a href="{% url 'accounts:register' %}" class="bg-white text-blue-900 px-6 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-all active:scale-95 shadow-lg shadow-white/10">Ro'yxatdan o'tish</a>
+            </div>
+        {% endif %}
+    </div>
+</nav>
+
+<main class="flex-grow">
+    {% if request.path == '/' %}
+    <section class="relative py-20 px-6 overflow-hidden">
+        <div class="container mx-auto max-w-5xl text-center relative z-10">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-blue-400">
+                Kelajak ishini <br> bugun toping
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12">
+                O'zbekistondagi eng yirik freelance hamjamiyatiga qo'shiling.
+            </p>
+
+            <div class="glass-card p-3 rounded-[2.5rem] shadow-2xl border border-white/10 max-w-4xl mx-auto">
+                <form method="GET" action="{% url 'marketplace:order_list' %}" class="flex flex-col lg:flex-row items-center gap-3">
+                    <div class="relative flex-grow w-full">
+                        <span class="absolute left-6 top-1/2 -translate-y-1/2 opacity-50">🔍</span>
+                        <input type="text" name="q" placeholder="Qidiruv..." class="w-full bg-slate-900/40 border border-white/5 py-5 pl-16 pr-6 rounded-[1.8rem] text-white outline-none focus:ring-2 focus:ring-blue-500/30">
+                    </div>
+                    <button type="submit" class="w-full lg:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-10 py-5 rounded-[1.8rem] transition-all active:scale-95">Izlash</button>
+                </form>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="container mx-auto px-6 py-10">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<footer class="bg-slate-950/80 backdrop-blur-md border-t border-white/5 py-16 mt-20">
+    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
+        <div class="col-span-1 md:col-span-2">
+            <a href="/" class="logo-font text-2xl font-bold text-white mb-6 block">🚀 Freelance.uz</a>
+            <p class="text-gray-500 text-sm max-w-sm mx-auto md:mx-0">O'zbekistonning eng professional frilans platformasi.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-6">Bo'limlar</h4>
+            <ul class="text-gray-500 text-sm space-y-3">
+                <li><a href="{% url 'marketplace:order_list' %}" class="hover:text-blue-400 transition">Loyihalar</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-6">Bog'lanish</h4>
+            <p class="text-gray-500 text-sm">support@freelance.uz</p>
+        </div>
+    </div>
+    <div class="text-center mt-16 text-gray-600 text-xs italic">
+        © 2026 Freelance.uz — Barcha huquqlar himoyalangan.
+    </div>
+</footer>
+
+<script>
+function toggleElement(id) {
+    const el = document.getElementById(id);
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+        if (m.id !== id) m.classList.add('hidden');
+    });
+    el.classList.toggle("hidden");
+}
+
+window.onclick = function(e) {
+    if (!e.target.closest('.relative')) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+    }
+}
+</script>
+
+</body>
+</html>

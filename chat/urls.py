@@ -10,4 +10,5 @@ urlpatterns = [
     path('offer/<int:offer_id>/accept/',views.AcceptOfferView.as_view(),   name='accept_offer'),
     path('open/<int:order_id>/',        views.OpenChatView.as_view(),      name='open_chat'),
     path('offer/<int:offer_id>/reject/', views.RejectOfferView.as_view(), name='reject_offer'),
+    path('my-offers/', views.MyOffersView.as_view(), name='my_offers'),
 ]

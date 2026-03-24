@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile_user.full_name }} - Profil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: white; }
+        .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .profile-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+    <div class="h-48 w-full profile-gradient opacity-40 absolute top-0 left-0 z-0"></div>
+
+    <div class="container mx-auto px-4 pt-24 relative z-10">
+        <div class="max-w-4xl mx-auto">
+            
+            <div class="glass-card rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                <div class="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                    <div class="relative">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full blur opacity-75"></div>
+                        <img src="{% if profile_user.avatar %}{{ profile_user.avatar.url }}{% else %}/static/default.png{% endif %}"
+                             class="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-slate-900">
+                        {% if is_own_profile %}
+                        <div class="absolute bottom-2 right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-slate-900" title="Onlayn"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex-1">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-3xl md:text-4xl font-black tracking-tight">{{ profile_user.full_name }}</h1>
+                                <p class="text-blue-400 font-bold uppercase tracking-widest text-xs mt-2">{{ level_label|default:"Frilanser" }}</p>
+                            </div>
+                            {% if is_own_profile %}
+                            <a href="{% url 'accounts:profile_edit' %}" 
+                               class="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-6 py-3 rounded-2xl font-bold transition-all text-sm flex items-center justify-center gap-2">
+                                <span>⚙️</span> Tahrirlash
+                            </a>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-6 flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400">
+                            <span class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                                📅 Ro'yxatdan o'tdi: {{ profile_user.date_joined|date:"Y" }}
+                            </span>
+                            <span class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                                ⭐ 5.0 Reyting
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-8 h-[2px] bg-blue-500"></span> Ma'lumot
+                    </h3>
+                    <p class="text-gray-400 leading-relaxed text-lg italic">
+                        "{{ profile.bio|default:"Ushbu foydalanuvchi o'zi haqida ma'lumot qoldirmagan." }}"
+                    </p>
+                </div>
+
+                <div class="mt-12">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-8 h-[2px] bg-blue-500"></span> Ko'nikmalar (Skills)
+                    </h3>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        {% for skill in profile.skills %}
+                            <span class="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-5 py-2 rounded-2xl font-semibold text-sm hover:bg-blue-600/20 transition-all cursor-default">
+                                #{{ skill }}
+                            </span>
+                        {% empty %}
+                            <p class="text-gray-600 italic">Ko'nikmalar qo'shilmagan</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <a href="{% url 'marketplace:order_list' %}" class="text-gray-500 hover:text-white transition-all text-sm font-medium">
+                    ← Asosiy sahifaga qaytish
+                </a>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

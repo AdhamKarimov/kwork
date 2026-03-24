@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish - Freelance.uz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 overflow-hidden relative">
+    
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full"></div>
+
+    <div class="glass-card p-10 rounded-[2.5rem] w-full max-w-md border border-white/10 shadow-2xl relative z-10">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black text-white tracking-tight mb-2">Xush kelibsiz</h1>
+            <p class="text-gray-500 text-sm">Davom etish uchun tizimga kiring</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl mb-6 text-sm text-center">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Email</label>
+                <input type="email" name="email" value="{{ email }}" placeholder="misol@mail.uz" required
+                       class="w-full bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-white mt-2 outline-none focus:border-blue-500/50 transition-all">
+            </div>
+
+            <div class="relative">
+                <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Parol</label>
+                <div class="relative mt-2">
+                    <input type="password" name="password" id="password" placeholder="••••••••" required
+                           class="w-full bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-blue-500/50 transition-all">
+                    <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">👁️</button>
+                </div>
+            </div>
+
+            <button class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition-all active:scale-95">
+                Kirish
+            </button>
+        </form>
+
+        <div class="mt-8 pt-8 border-t border-white/5 text-center">
+            <p class="text-gray-500 text-sm">
+                Hisobingiz yo'qmi? 
+                <a href="{% url 'accounts:register' %}" class="text-blue-400 font-bold hover:underline">Ro'yxatdan o'ting</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+    </script>
+</body>
+</html>
