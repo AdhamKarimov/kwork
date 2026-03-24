@@ -3,17 +3,11 @@ from . import views
 
 app_name = 'chat'
 
-
 urlpatterns = [
-    # Chat xonasiga kirish
-    path('room/<int:room_id>/', views.ChatRoomDetailView.as_view(), name='room_detail'),
-    
-    # TZ: Frilanser taklif yuborishi
-    path('room/<int:room_id>/offer/send/', views.SendOfferView.as_view(), name='send_offer'),
-    
-    # TZ: Mijoz taklifni qabul qilishi (Loyiha va Taymer boshlanishi)
-    path('offer/<int:offer_id>/accept/', views.AcceptOfferView.as_view(), name='accept_offer'),
-    
-    # Chat xonasi yaratish (Marketplace'dan o'tilganda)
-    path('create-room/<int:order_id>/', views.CreateChatRoomView.as_view(), name='create_room'),
+    path('room/<int:room_id>/',         views.ChatRoomDetailView.as_view(), name='room_detail'),
+    path('room/<int:room_id>/message/', views.SendMessageView.as_view(),   name='send_message'),
+    path('room/<int:room_id>/offer/',   views.SendOfferView.as_view(),     name='send_offer'),
+    path('offer/<int:offer_id>/accept/',views.AcceptOfferView.as_view(),   name='accept_offer'),
+    path('open/<int:order_id>/',        views.OpenChatView.as_view(),      name='open_chat'),
+    path('offer/<int:offer_id>/reject/', views.RejectOfferView.as_view(), name='reject_offer'),
 ]

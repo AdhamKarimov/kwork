@@ -50,24 +50,34 @@ class Offer(models.Model):
 
     def accept(self):
         from datetime import timedelta
+        from notifications.services import notify_offer_accepted
+
         self.status       = self.Status.ACCEPTED
         self.responded_at = timezone.now()
         self.save(update_fields=['status', 'responded_at'])
 
-        order             = self.room.order
-        order.status      = Order.Status.IN_PROGRESS
-        order.final_price = self.proposed_price
-        order.deadline    = timezone.now() + timedelta(days=self.delivery_days)
-        order.save(update_fields=['status', 'final_price', 'deadline'])
+        order                     = self.room.order
+        order.status              = Order.Status.IN_PROGRESS
+        order.final_price         = self.proposed_price
+        order.deadline            = timezone.now() + timedelta(days=self.delivery_days)
+        order.assigned_freelancer = self.sender
+        order.save(update_fields=['status', 'final_price', 'deadline', 'assigned_freelancer'])
 
-        Offer.objects.filter(room=self.room, status=self.Status.PENDING).exclude(pk=self.pk).update(
-            status=self.Status.EXPIRED
+        Offer.objects.filter(
+            room=self.room, status=self.Status.PENDING
+        ).exclude(pk=self.pk).update(status=self.Status.EXPIRED)
+
+        notify_offer_accepted(
+            freelancer  = self.sender,
+            order_title = order.title,
+            order_pk    = order.pk,
         )
 
     def reject(self):
         self.status       = self.Status.REJECTED
         self.responded_at = timezone.now()
         self.save(update_fields=['status', 'responded_at'])
+
 
     def __str__(self):
         return f"{self.proposed_price} so'm | {self.delivery_days} kun | {self.status}"

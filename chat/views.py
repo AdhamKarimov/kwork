@@ -104,3 +104,74 @@ class AcceptOfferView(LoginRequiredMixin, View):
         offer.accept()
 
         return redirect('chat:room_detail', room_id=offer.room.id)
+
+
+class SendMessageView(LoginRequiredMixin, View):
+    """Chat xonasiga oddiy matn xabar yuborish."""
+
+    def post(self, request, room_id):
+        room = get_object_or_404(ChatRoom, id=room_id)
+
+        if request.user not in (room.client, room.freelancer):
+            raise PermissionDenied('Siz bu chat xonasiga kira olmaysiz.')
+
+        content = request.POST.get('content', '').strip()
+        if content:
+            Message.objects.create(
+                room    = room,
+                sender  = request.user,
+                content = content,
+            )
+        return redirect('chat:room_detail', room_id=room_id)
+
+
+class OpenChatView(LoginRequiredMixin, View):
+    """
+    Frilanser buyurtma sahifasidan 'Bog'lanish' tugmasini bosadi →
+    ChatRoom yaratiladi yoki mavjudi topiladi → xonaga yo'naltiriladi.
+    """
+    login_url = 'accounts:login'
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, pk=order_id)
+
+        # Faqat frilanser chat ochishi mumkin
+        if request.user.role != 'FREELANCER':
+            raise PermissionDenied('Faqat frilanserlar chat ocha oladi.')
+
+        # OPEN yoki IN_NEGOTIATION holatidagi buyurtmalarda chat ochamiz
+        if order.status not in (Order.Status.OPEN, Order.Status.IN_NEGOTIATION):
+            messages.error(request, 'Bu buyurtmaga chat ochib bo\'lmaydi.')
+            return redirect('marketplace:order_detail', pk=order_id)
+
+        # get_or_create — bir frilanser bir buyurtmaga faqat bitta xona
+        room, created = ChatRoom.objects.get_or_create(
+            order      = order,
+            freelancer = request.user,
+            defaults   = {'client': order.client},
+        )
+
+        # Birinchi marta ochilganda buyurtma statusini IN_NEGOTIATION ga o'zgartir
+        if created and order.status == Order.Status.OPEN:
+            order.status = Order.Status.IN_NEGOTIATION
+            order.save(update_fields=['status'])
+
+            # Mijozga bildirishnoma
+            from notifications.services import notify_offer_received
+            notify_offer_received(
+                client=order.client,
+                freelancer_name=request.user.full_name,
+                order_title=order.title,
+                order_pk=order.pk,
+            )
+
+        return redirect('chat:room_detail', room_id=room.id)
+
+
+class RejectOfferView(LoginRequiredMixin, View):
+    def post(self, request, offer_id):
+        offer = get_object_or_404(Offer, id=offer_id)
+        if request.user != offer.room.client:
+            raise PermissionDenied
+        offer.reject()
+        return redirect('chat:room_detail', room_id=offer.room.id)

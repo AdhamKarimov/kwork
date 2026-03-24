@@ -10,4 +10,7 @@ urlpatterns = [
     path('resend-code/', views.ResendCodeView.as_view(), name='resend_code'),
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.logout_out, name='logout'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/<int:pk>/', views.ProfileView.as_view(), name='profile_detail'),
+    path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
 ]

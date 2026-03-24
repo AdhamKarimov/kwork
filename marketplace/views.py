@@ -107,3 +107,41 @@ class MyOrdersView(LoginRequiredMixin, View):
     def get(self, request):
         orders = Order.objects.filter(client=request.user).order_by('-created_at')
         return render(request, 'marketplace/my_orders.html', {'orders': orders})
+
+
+
+class OrderCompleteView(LoginRequiredMixin, View):
+    """
+    Frilanser ishni topshiradi → mijoz COMPLETED deb tasdiqlaydi.
+    Faqat IN_PROGRESS holatida ishlaydi.
+    """
+    login_url = 'accounts:login'
+
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+
+        # Faqat mijoz tugatishi mumkin
+        if request.user != order.client:
+            raise PermissionDenied('Faqat buyurtma egasi tugatishi mumkin.')
+
+        if order.status != Order.Status.IN_PROGRESS:
+            messages.error(request, 'Faqat jarayondagi buyurtmani tugatish mumkin.')
+            return redirect('marketplace:order_detail', pk=pk)
+
+        order.status = Order.Status.COMPLETED
+        order.save(update_fields=['status'])
+
+        # Frilanserga bildirishnoma
+        from notifications.services import notify_order_completed
+        chat_room = order.chat_rooms.first()
+        if chat_room and chat_room.freelancer:
+            notify_order_completed(
+                freelancer=chat_room.freelancer,
+                order_title=order.title,
+                order_pk=order.pk,
+            )
+
+        messages.success(request, 'Buyurtma muvaffaqiyatli yakunlandi!')
+        return redirect('marketplace:order_detail', pk=pk)
+
+

@@ -58,3 +58,4 @@ class Order(models.Model):
             delta = self.deadline - timezone.now()
             return max(int(delta.total_seconds()), 0)
         return None
+

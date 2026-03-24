@@ -1,8 +1,12 @@
-from django.shortcuts import render, redirect
-from django.views import View
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+
+from .models import User, Profile
 
 
 from .models import User, Emailcode
@@ -190,3 +194,85 @@ class LoginView(View):
 def logout_out(request):
     logout(request)
     return redirect('marketplace:order_list')
+
+
+class ProfileView(View):
+    """Foydalanuvchi profili — o'z profilingiz yoki boshqanikini ko'rish."""
+
+    def get(self, request, pk=None):
+        if pk:
+            profile_user = get_object_or_404(User, pk=pk)
+        elif request.user.is_authenticated:
+            profile_user = request.user
+        else:
+            return redirect('accounts:login')
+
+        profile, _ = Profile.objects.get_or_create(user=profile_user)
+
+        # ✅ Review modeli bilan to'g'ri bog'lash
+        from reviews.models import Review
+        from django.db.models import Avg
+
+        reviews = (
+            Review.objects
+            .filter(freelancer=profile_user)
+            .select_related('reviewer', 'order')
+            .order_by('-created_at')
+        )
+        avg_stars = reviews.aggregate(avg=Avg('stars'))['avg'] or 0
+
+        level_labels = {1: 'Boshlovchi', 2: "O'rta", 3: 'Ekspert'}
+        level_colors = {1: '#8a8278',    2: '#c8a96e', 3: '#3d7a5e'}
+
+        return render(request, 'accounts/profile.html', {
+            'profile_user':   profile_user,
+            'profile':        profile,
+            'reviews':        reviews,
+            'avg_stars':      round(float(avg_stars), 1),
+            'reviews_count':  reviews.count(),
+            'is_own_profile': request.user == profile_user,
+            'level_label':    level_labels.get(profile.level, 'Boshlovchi'),
+            'level_color':    level_colors.get(profile.level, '#8a8278'),
+        })
+
+class ProfileEditView(LoginRequiredMixin, View):
+    """Foydalanuvchi o'z profilini tahrirlash."""
+    login_url = 'accounts:login'
+
+    def get(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        # skills JSONField — list shaklida saqlanadi, virgul bilan ko'rsatamiz
+        skills_str = ', '.join(profile.skills) if profile.skills else ''
+        return render(request, 'accounts/profile_edit.html', {
+            'profile': profile,
+            'skills_str': skills_str,
+        })
+
+    def post(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        user = request.user
+
+        # User maydonlari
+        full_name = request.POST.get('full_name', '').strip()
+        if full_name:
+            user.full_name = full_name
+            user.save(update_fields=['full_name'])
+
+        # Avatar
+        if 'avatar' in request.FILES:
+            user.avatar = request.FILES['avatar']
+            user.save(update_fields=['avatar'])
+
+        # Profile maydonlari
+        profile.bio = request.POST.get('bio', '').strip() or None
+
+        # Skills: "Python, Django, React" → ['Python', 'Django', 'React']
+        skills_raw = request.POST.get('skills', '')
+        profile.skills = [
+            s.strip() for s in skills_raw.split(',') if s.strip()
+        ]
+
+        profile.save(update_fields=['bio', 'skills'])
+
+        messages.success(request, 'Profil muvaffaqiyatli yangilandi!')
+        return redirect('accounts:profile')
