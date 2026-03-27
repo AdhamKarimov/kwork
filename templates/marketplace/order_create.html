@@ -39,17 +39,6 @@
                     {% if form.initial_budget.errors %}<p class="text-red-400 text-xs mt-1">{{ form.initial_budget.errors.0 }}</p>{% endif %}
                 </div>
 
-                <div>
-                    <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Yo'nalish (Teglar)</label>
-                    <div class="mt-2">
-                        <select name="tags" multiple class="w-full bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-blue-500/50 transition-all custom-scrollbar">
-                            {% for tag in form.tags.field.queryset %}
-                                <option value="{{ tag.id }}" class="bg-slate-900 p-2">{{ tag.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <p class="text-[9px] text-gray-600 mt-2 italic">Ctrl tugmasini bosib bir nechtasini tanlash mumkin</p>
-                </div>
             </div>
 
             <div class="pt-6">

@@ -72,3 +72,33 @@ def notify_offer_rejected(freelancer, order_title, order_pk, room_pk=None):
         message = f'❌ "{order_title}" buyurtmasi uchun taklifingiz rad etildi.',
         link    = link,
     )
+
+
+def notify_work_submitted(client, freelancer_name, order_title, order_pk, room_pk):
+    """Mijozga: frilanser ish topshirdi."""
+    Notification.objects.create(
+        user    = client,
+        type    = Notification.Type.OFFER_RECEIVED,
+        message = f'📦 {freelancer_name} "{order_title}" loyihasi bo\'yicha ish topshirdi.',
+        link    = reverse('chat:room_detail', kwargs={'room_id': room_pk}),
+    )
+
+
+def notify_work_approved(freelancer, order_title, order_pk, rating):
+    """Frilansерga: ish tasdiqlandi + baho."""
+    Notification.objects.create(
+        user    = freelancer,
+        type    = Notification.Type.ORDER_COMPLETED,
+        message = f'🎉 "{order_title}" loyihasi tasdiqlandi! Baho: {"⭐" * rating}',
+        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+    )
+
+
+def notify_work_rejected(freelancer, order_title, order_pk):
+    """Frilansерga: ish qayta ishlash kerak."""
+    Notification.objects.create(
+        user    = freelancer,
+        type    = Notification.Type.DEADLINE_SOON,
+        message = f'🔄 "{order_title}" loyihasi bo\'yicha qayta ishlash so\'raldi.',
+        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+    )

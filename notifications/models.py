@@ -10,6 +10,8 @@ class Notification(models.Model):
         DEADLINE_SOON   = 'DEADLINE_SOON',   'Muddat yaqinlashmoqda'
         DEADLINE_PASSED = 'DEADLINE_PASSED', 'Muddat o\'tdi'
         ORDER_COMPLETED = 'ORDER_COMPLETED', 'Ish tugatildi'
+        MESSAGE         = 'MESSAGE',         'Yangi xabar'
+
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     type = models.CharField(max_length=30, choices=Type.choices)

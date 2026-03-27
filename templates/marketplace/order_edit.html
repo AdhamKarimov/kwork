@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Loyihani tahrirlash: {{ order.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10">
+
+    <a href="{% url 'marketplace:order_detail' order.pk %}" class="text-gray-500 hover:text-white transition-all flex items-center gap-2 mb-6 group">
+        <span class="group-hover:-translate-x-1 transition-transform">←</span> Orqaga qaytish
+    </a>
+
+    <div class="glass-card p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-24 -left-24 w-64 h-64 bg-yellow-500/10 blur-[100px] rounded-full"></div>
+
+        <div class="relative z-10">
+            <h1 class="text-3xl font-black text-white mb-2 text-center md:text-left">
+                Loyihani <span class="text-yellow-500">tahrirlash</span>
+            </h1>
+            <p class="text-gray-500 mb-10 text-center md:text-left text-sm">Loyiha ma'lumotlarini o'zgartiring va saqlang</p>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4">Loyiha sarlavhasi</label>
+                    <input type="text" name="title" value="{{ order.title }}" required
+                           class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-yellow-500/50 transition-all shadow-inner"
+                           placeholder="Masalan: Telegram bot yaratish">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4">Byudjet ($)</label>
+                    <input type="number" name="initial_budget" value="{{ order.initial_budget }}" required
+                           class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-yellow-500/50 transition-all shadow-inner"
+                           placeholder="Byudjetni kiriting">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-4">Loyiha haqida batafsil</label>
+                    <textarea name="description" rows="6" required
+                              class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl text-white outline-none focus:border-yellow-500/50 transition-all resize-none shadow-inner"
+                              placeholder="Loyiha shartlari va talablarini yozing...">{{ order.description }}</textarea>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4 pt-6">
+                    <button type="submit"
+                            class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-2xl shadow-xl shadow-yellow-500/20 transition-all active:scale-95 uppercase text-xs tracking-widest">
+                        O'zgarishlarni saqlash
+                    </button>
+                    <a href="{% url 'marketplace:order_detail' order.pk %}"
+                       class="flex-1 bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-black text-center transition-all hover:bg-white/10 uppercase text-xs tracking-widest">
+                        Bekor qilish
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
