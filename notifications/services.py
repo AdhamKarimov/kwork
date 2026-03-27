@@ -102,3 +102,13 @@ def notify_work_rejected(freelancer, order_title, order_pk):
         message = f'🔄 "{order_title}" loyihasi bo\'yicha qayta ishlash so\'raldi.',
         link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
     )
+
+
+def notify_new_chat(client, freelancer_name, order_title, order_pk):
+    """Mijozga: frilanser chat ochdi."""
+    Notification.objects.create(
+        user    = client,
+        type    = Notification.Type.OFFER_RECEIVED,
+        message = f'💬 {freelancer_name} "{order_title}" loyihangiz bo\'yicha muloqot boshladi.',
+        link    = reverse('marketplace:order_detail', kwargs={'pk': order_pk}),
+    )

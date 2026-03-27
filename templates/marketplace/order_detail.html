@@ -70,14 +70,20 @@
                     </form>
                 {% endif %}
 
-                {% if is_freelancer and order.status == 'OPEN' %}
-                <form method="POST" action="{% url 'chat:open_chat' order.id %}" class="inline w-full md:w-auto">
-                    {% csrf_token %}
-                    <button class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-3">
-                        <span>💬</span> Bog'lanish va taklif berish
-                    </button>
-                </form>
-                {% endif %}
+                {% if can_apply %}
+                    <form method="POST" action="{% url 'chat:open_chat' order.id %}" class="inline w-full md:w-auto">
+                        {% csrf_token %}
+                        <button class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-12 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-3">
+                            <span>💬</span> Bog'lanish va taklif berish
+                        </button>
+                    </form>
+
+                    {% elif already_applied and user_room_id %}
+                    <a href="{% url 'chat:room_detail' room_id=user_room_id %}"
+                       class="inline-flex items-center gap-3 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20 px-12 py-4 rounded-2xl font-bold transition-all active:scale-95">
+                        <span>💬</span> Chatga o'tish
+                    </a>
+                    {% endif %}
 
                 {% if is_owner and order.status == 'IN_PROGRESS' %}
                 <form method="POST" action="{% url 'marketplace:order_complete' order.id %}" class="inline">
@@ -90,6 +96,83 @@
             </div>
         </div>
     </div>
+    {% if is_owner %}
+<div class="mt-8 space-y-4">
+    <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">💰 Kelgan takliflar</h3>
+
+    {% for room in order.chat_rooms.all %}
+        {% if room.offers.all %}
+        <div class="glass-card p-6 rounded-[2.5rem] border border-white/5 hover:border-blue-500/20 transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                    👤 Frilanser: <span class="text-blue-400">{{ room.freelancer.get_full_name|default:room.freelancer.username }}</span>
+                </h4>
+                <a href="{% url 'chat:room_detail' room.id %}"
+                   class="text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest transition-colors">
+                    Chatga o'tish →
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {% for offer in room.offers.all %}
+                <div class="p-4 rounded-2xl border transition-all
+                    {% if offer.status == 'ACCEPTED' %}bg-green-500/5 border-green-500/30
+                    {% elif offer.status == 'REJECTED' %}bg-red-500/5 border-red-500/20 opacity-60
+                    {% elif offer.status == 'EXPIRED' %}bg-white/2 border-white/5 opacity-40
+                    {% else %}bg-slate-900/40 border-white/10{% endif %}">
+
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-white font-black text-lg">{{ offer.proposed_price|floatformat:0 }} so'm</span>
+                        <span class="text-gray-500 text-[10px] font-bold uppercase">{{ offer.delivery_days }} kun</span>
+                    </div>
+
+                    {% if offer.message %}
+                    <p class="text-gray-400 text-xs italic mb-3 line-clamp-2">"{{ offer.message }}"</p>
+                    {% endif %}
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-black uppercase tracking-widest
+                            {% if offer.status == 'ACCEPTED' %}text-green-500
+                            {% elif offer.status == 'REJECTED' %}text-red-400
+                            {% elif offer.status == 'EXPIRED' %}text-gray-600
+                            {% else %}text-yellow-500{% endif %}">
+                            {% if offer.status == 'ACCEPTED' %}✅ Qabul qilindi
+                            {% elif offer.status == 'REJECTED' %}❌ Rad etildi
+                            {% elif offer.status == 'EXPIRED' %}⏸ Muddati o'tgan
+                            {% else %}⏳ Kutilmoqda{% endif %}
+                        </span>
+
+                        {% if offer.status == 'PENDING' %}
+                        <div class="flex gap-2">
+                            <form method="POST" action="{% url 'chat:accept_offer' offer.id %}">
+                                {% csrf_token %}
+                                <button class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">
+                                    ✓ Qabul
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'chat:reject_offer' offer.id %}">
+                                {% csrf_token %}
+                                <button class="bg-white/5 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-white/5">
+                                    ✕ Rad
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <span class="text-[9px] text-gray-600 mt-2 block">{{ offer.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% empty %}
+        <div class="text-center py-8 opacity-30 italic text-sm text-gray-500">
+            Hali hech qanday taklif yo'q
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
 
     {% if is_owner and order.status == 'COMPLETED' and not order.review %}
     <div class="glass-card p-10 rounded-[3rem] border border-white/10 shadow-2xl mt-8 animate-in fade-in slide-in-from-bottom-4">

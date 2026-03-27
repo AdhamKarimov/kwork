@@ -86,11 +86,24 @@ class OrderDetailView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
+
+        # Frilanser allaqachon bu loyihaga chat ochganmi?
+        already_applied = False
+        if request.user.is_authenticated and request.user.role == 'FREELANCER':
+            already_applied = order.chat_rooms.filter(freelancer=request.user).exists()
+
         context = {
             'order': order,
             'is_owner': order.client == request.user,
             'is_freelancer': request.user.role == 'FREELANCER',
             'time_remaining': order.time_remaining_seconds,
+            'already_applied': already_applied,  # ✅ yangi
+            'can_apply': (  # ✅ yangi
+                    request.user.is_authenticated
+                    and request.user.role == 'FREELANCER'
+                    and order.status in [Order.Status.OPEN, Order.Status.IN_NEGOTIATION]
+                    and not already_applied
+            ),
         }
         return render(request, 'marketplace/order_detail.html', context)
 
