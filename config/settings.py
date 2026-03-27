@@ -38,7 +38,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.users.tasks.send_daily_report',  # Task joylashgan yo'l
         'schedule': 300.0,  # soniya hisobida (yoki crontab ishlatsa bo'ladi)
     },
+    'check-deadlines-every-10-minutes': {
+        'task': 'notifications.tasks.check_deadlines',
+        'schedule': 600.0,  # 10 daqiqa
+    },
 }
+
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

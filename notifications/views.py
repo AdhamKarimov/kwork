@@ -10,7 +10,7 @@ class NotificationListView(LoginRequiredMixin, View):
     login_url = 'accounts:login'
 
     def get(self, request):
-        notifications = Notification.objects.filter(user=request.user)
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
         unread_count = notifications.filter(is_read=False).count()
         # Sahifaga kirganda hammasini o'qilgan deb belgilash
         notifications.filter(is_read=False).update(is_read=True)

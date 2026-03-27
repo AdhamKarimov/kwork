@@ -82,6 +82,11 @@ class SendOfferView(LoginRequiredMixin, View):
             message        = message_text,
         )
 
+        order = room.order
+        if order.status == Order.Status.OPEN:
+            order.status = Order.Status.IN_NEGOTIATION
+            order.save(update_fields=['status'])
+
         from notifications.services import notify_offer_received
         notify_offer_received(
             client          = room.client,
