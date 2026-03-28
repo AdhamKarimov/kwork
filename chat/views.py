@@ -268,7 +268,7 @@ class MyOffersView(LoginRequiredMixin, View):
 
         offers = (
             request.user.sent_offers
-            .select_related('room__order')
+            .select_related('room__order', 'room')
             .order_by('-created_at')
         )
         return render(request, 'chat/my_offers.html', {'offers': offers})
