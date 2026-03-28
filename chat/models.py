@@ -73,7 +73,8 @@ class Offer(models.Model):
         order.save(update_fields=['status', 'final_price', 'deadline', 'assigned_freelancer'])
 
         Offer.objects.filter(
-            room=self.room, status=self.Status.PENDING
+            room__order=order,
+            status=self.Status.PENDING,
         ).exclude(pk=self.pk).update(status=self.Status.EXPIRED)
 
         notify_offer_accepted(

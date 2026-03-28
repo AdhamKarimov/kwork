@@ -267,14 +267,13 @@
                         {{ room.client.username|slice:":1"|upper }}
                     {% endif %}
                 </div>
-                <div>
-                    <h4 class="text-white font-black text-base">
-                        {% if request.user == room.client %}
-                            {{ room.freelancer.get_full_name|default:room.freelancer.username }}
-                        {% else %}
-                            {{ room.client.get_full_name|default:room.client.username }}
-                        {% endif %}
-                    </h4>
+                <h4 class="text-white font-black text-base">
+                    {% if request.user == room.client %}
+                        {{ room.freelancer.get_full_name|default:room.freelancer.full_name }}
+                    {% else %}
+                        {{ room.client.get_full_name|default:room.client.full_name }}
+                    {% endif %}
+                </h4>
                     <div class="flex items-center gap-1.5">
                         <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
                         <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Online</span>
