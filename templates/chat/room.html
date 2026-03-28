@@ -6,6 +6,7 @@
 
     <aside class="w-full lg:w-1/3 flex flex-col gap-4 h-full">
 
+        <!-- Loyiha ma'lumoti -->
         <div class="glass-card p-6 rounded-[2.5rem] border border-white/10 shadow-xl overflow-hidden relative group shrink-0">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 blur-[50px] rounded-full"></div>
             <h2 class="text-white font-black text-xl mb-2 line-clamp-1 relative z-10">{{ room.order.title }}</h2>
@@ -14,21 +15,23 @@
                     {{ room.order.status }}
                 </span>
                 {% if time_left %}
-                    <span id="timer" class="text-green-500 text-[10px] font-bold uppercase tracking-widest bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20"></span>
+                <span id="timer" class="text-green-500 text-[10px] font-bold uppercase tracking-widest bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20"></span>
                 {% endif %}
                 {% if is_expired %}
-                    <span class="text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">⚠ Muddat o'tdi</span>
+                <span class="text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">⚠ Muddat o'tdi</span>
                 {% endif %}
             </div>
             <p class="text-gray-400 text-sm line-clamp-2 leading-relaxed">{{ room.order.description }}</p>
         </div>
 
+        <!-- Takliflar paneli -->
         <div class="glass-card flex-1 p-6 rounded-[2.5rem] border border-white/10 shadow-xl flex flex-col overflow-hidden min-h-0">
             <h3 class="text-white font-black text-sm mb-6 uppercase tracking-widest flex items-center justify-between shrink-0">
                 <span>💰 Takliflar</span>
                 <span class="text-gray-500 text-[10px]">{{ offers.count }} ta</span>
             </h3>
 
+            <!-- Takliflar ro'yxati -->
             <div class="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1 mb-4">
                 {% for offer in offers %}
                 <div class="p-4 rounded-2xl border transition-all
@@ -62,30 +65,26 @@
                         <div class="flex gap-2">
                             <form method="POST" action="{% url 'chat:accept_offer' offer.id %}">
                                 {% csrf_token %}
-                                <button class="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-lg shadow-green-600/10">
-                                    Qabul
-                                </button>
+                                <button class="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all">Qabul</button>
                             </form>
                             <form method="POST" action="{% url 'chat:reject_offer' offer.id %}">
                                 {% csrf_token %}
-                                <button class="bg-white/5 hover:bg-red-500/20 text-red-400 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-white/5">
-                                    Rad
-                                </button>
+                                <button class="bg-white/5 hover:bg-red-500/20 text-red-400 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-white/5">Rad</button>
                             </form>
                         </div>
                         {% endif %}
                     </div>
-
                     <span class="text-[9px] text-gray-600 mt-2 block">{{ offer.created_at|date:"d.m.Y H:i" }}</span>
                 </div>
                 {% empty %}
-                <div class="text-center py-10 opacity-30 italic text-sm text-gray-500">
-                    Takliflar mavjud emas
-                </div>
+                <div class="text-center py-10 opacity-30 italic text-sm text-gray-500">Takliflar mavjud emas</div>
                 {% endfor %}
             </div>
 
+            <!-- Pastki qism -->
             <div class="shrink-0">
+
+                <!-- 1. BLOKLANGAN -->
                 {% if request.user == room.freelancer and room.is_blocked %}
                 <div class="pt-4 border-t border-white/5">
                     <div class="text-center py-3 px-4 rounded-2xl bg-red-500/10 border border-red-500/20">
@@ -95,13 +94,13 @@
                     </div>
                 </div>
 
+                <!-- 2. TAKLIF BERISH -->
                 {% elif can_send_offer %}
                 <div class="pt-4 border-t border-white/5">
                     <button onclick="document.getElementById('offerForm').classList.toggle('hidden')"
                             class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95">
                         + Taklif berish
                     </button>
-
                     <form id="offerForm" method="POST" action="{% url 'chat:send_offer' room.id %}"
                           class="hidden mt-4 space-y-3">
                         {% csrf_token %}
@@ -123,13 +122,14 @@
                                       class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none h-24 resize-none focus:border-blue-500/50 transition-all"></textarea>
                         </div>
                         <button type="submit"
-                                class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:opacity-90 transition-all active:scale-95">
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:opacity-90 transition-all active:scale-95">
                             Yuborish
                         </button>
                     </form>
                 </div>
 
-                {% elif request.user == room.freelancer and room.offers.last.status == 'PENDING' %}
+                <!-- 3. PENDING TAKLIF BOR -->
+                {% elif request.user == room.freelancer and room.offers.last and room.offers.last.status == 'PENDING' %}
                 <div class="pt-4 border-t border-white/5">
                     <div class="text-center py-3 px-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
                         <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest">
@@ -139,64 +139,75 @@
                 </div>
                 {% endif %}
 
+                <!-- 4. LOYIHA IN_PROGRESS -->
                 {% if room.order.status == 'IN_PROGRESS' %}
-                <div class="pt-4 border-t border-white/5 space-y-3">
+                <div class="pt-4 border-t border-white/5 space-y-3 mt-2">
+
                     <div class="text-center py-3 px-4 rounded-2xl bg-green-500/10 border border-green-500/20">
                         <span class="text-green-400 text-[10px] font-black uppercase tracking-widest">✅ Loyiha boshlandi</span>
                     </div>
 
+                    <!-- FRILANSER qismi -->
                     {% if request.user == room.freelancer %}
-                        {% if active_submission %}
-                        <div class="text-center py-3 px-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
-                            <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest">
-                                ⏳ Topshiriqingiz ko'rib chiqilmoqda...
-                            </span>
-                        </div>
-                        {% else %}
-                        <button onclick="document.getElementById('submitForm').classList.toggle('hidden')"
-                                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
-                            📦 Ishni topshirish
-                        </button>
 
-                        <form id="submitForm" method="POST" action="{% url 'chat:submit_work' room.id %}"
-                              enctype="multipart/form-data" class="hidden mt-3 space-y-3">
-                            {% csrf_token %}
-                            <div>
-                                <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-1 block">
-                                    Fayl yuklash
-                                </label>
-                                <input type="file" name="file" required
-                                       class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none focus:border-indigo-500/50 transition-all file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-indigo-600 file:text-white">
+                        {% if is_assigned_freelancer %}
+                            <!-- Tanlangan frilanser -->
+                            {% if active_submission %}
+                            <div class="text-center py-3 px-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+                                <span class="text-yellow-400 text-[10px] font-black uppercase tracking-widest">
+                                    ⏳ Topshiriqingiz ko'rib chiqilmoqda...
+                                </span>
                             </div>
-                            <div>
-                                <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-1 block">
-                                    Izoh (ixtiyoriy)
-                                </label>
-                                <textarea name="comment" placeholder="Nima qildingiz, qanday ishladi..."
-                                          class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none h-20 resize-none focus:border-indigo-500/50 transition-all"></textarea>
-                            </div>
-                            <button type="submit"
-                                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95">
-                                Topshirish
+                            {% else %}
+                            <button onclick="document.getElementById('submitForm').classList.toggle('hidden')"
+                                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+                                📦 Ishni topshirish
                             </button>
-                        </form>
-                        {% endif %}
-
-                        {% if last_submission and last_submission.status == 'REJECTED' %}
-                        <div class="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 mt-3">
-                            <p class="text-red-400 text-[10px] font-black uppercase tracking-widest mb-1">🔄 Qayta ishlash kerak</p>
-                            {% if last_submission.client_note %}
-                            <p class="text-gray-400 text-xs italic">"{{ last_submission.client_note }}"</p>
+                            <form id="submitForm" method="POST" action="{% url 'chat:submit_work' room.id %}"
+                                  enctype="multipart/form-data" class="hidden mt-3 space-y-3">
+                                {% csrf_token %}
+                                <div>
+                                    <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-1 block">Fayl yuklash</label>
+                                    <input type="file" name="file" required
+                                           class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none focus:border-indigo-500/50 transition-all file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-indigo-600 file:text-white">
+                                </div>
+                                <div>
+                                    <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-1 block">Izoh (ixtiyoriy)</label>
+                                    <textarea name="comment" placeholder="Nima qildingiz, qanday ishladi..."
+                                              class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none h-20 resize-none focus:border-indigo-500/50 transition-all"></textarea>
+                                </div>
+                                <button type="submit"
+                                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95">
+                                    Topshirish
+                                </button>
+                            </form>
                             {% endif %}
-                        </div>
-                        {% endif %}
-                    {% endif %}
 
+                            {% if last_submission and last_submission.status == 'REJECTED' %}
+                            <div class="p-3 rounded-2xl bg-red-500/10 border border-red-500/20 mt-2">
+                                <p class="text-red-400 text-[10px] font-black uppercase tracking-widest mb-1">🔄 Qayta ishlash kerak</p>
+                                {% if last_submission.client_note %}
+                                <p class="text-gray-400 text-xs italic">"{{ last_submission.client_note }}"</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                        {% else %}
+                            <!-- Boshqa frilanser — taklifi rad/expired -->
+                            <div class="text-center py-3 px-4 rounded-2xl bg-gray-500/10 border border-gray-500/20">
+                                <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                                    ℹ️ Bu loyiha boshqa frilanserga berildi
+                                </span>
+                            </div>
+                        {% endif %}
+
+                    {% endif %}
+                    <!-- FRILANSER qismi tugadi -->
+
+                    <!-- MIJOZ qismi — topshiriq kelganda -->
                     {% if request.user == room.client and active_submission %}
-                    <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-3 mt-3">
-                        <p class="text-indigo-400 text-[10px] font-black uppercase tracking-widest">
-                            📦 Yangi topshiriq keldi!
-                        </p>
+                    <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-3 mt-2">
+                        <p class="text-indigo-400 text-[10px] font-black uppercase tracking-widest">📦 Yangi topshiriq keldi!</p>
 
                         <a href="{{ active_submission.file.url }}" target="_blank"
                            class="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/40 transition-all group">
@@ -208,65 +219,66 @@
                         {% if active_submission.comment %}
                         <p class="text-gray-400 text-xs italic">"{{ active_submission.comment }}"</p>
                         {% endif %}
+                        <p class="text-gray-600 text[9px]">{{ active_submission.created_at|date:"d.m.Y H:i" }}</p>
 
-                        <p class="text-gray-600 text-[9px]">{{ active_submission.created_at|date:"d.m.Y H:i" }}</p>
-
-                        <form method="POST" action="{% url 'chat:review_submission' active_submission.id %}" id="approveForm" class="space-y-3">
+                        <!-- Tasdiqlash -->
+                        <form method="POST" action="{% url 'chat:review_submission' active_submission.id %}" class="space-y-3">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="approve">
-
                             <div>
-                                <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-2 block">
-                                    Baho bering
-                                </label>
-                                <div class="flex gap-2" id="starRating">
+                                <label class="text-gray-500 text-[9px] uppercase tracking-widest font-bold mb-2 block">Baho bering</label>
+                                <div class="flex gap-2">
                                     {% for i in "12345" %}
                                     <button type="button" onclick="setRating({{ forloop.counter }})"
-                                            data-star="{{ forloop.counter }}"
-                                            class="text-2xl transition-all hover:scale-110 star-btn {% if forloop.counter == 5 %}opacity-100{% else %}opacity-30{% endif %}">
-                                        ⭐
-                                    </button>
+                                            class="text-2xl transition-all hover:scale-110 star-btn {% if forloop.counter == 5 %}opacity-100{% else %}opacity-30{% endif %}">⭐</button>
                                     {% endfor %}
                                 </div>
                                 <input type="hidden" name="rating" id="ratingInput" value="5">
                             </div>
-
                             <textarea name="client_note" placeholder="Izoh (ixtiyoriy)..."
                                       class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none h-16 resize-none focus:border-green-500/50 transition-all"></textarea>
-
-                            <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95">
+                            <button type="submit"
+                                    class="w-full bg-green-600 hover:bg-green-500 text-white p-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95">
                                 ✅ Tasdiqlash
                             </button>
                         </form>
 
-                        <form method="POST" action="{% url 'chat:review_submission' active_submission.id %}" id="rejectForm" class="space-y-2 mt-2">
+                        <!-- Rad etish -->
+                        <form method="POST" action="{% url 'chat:review_submission' active_submission.id %}" class="space-y-2 mt-2">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="reject">
                             <textarea name="client_note" placeholder="Nima o'zgartirilishi kerak..." required
                                       class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white text-xs outline-none h-16 resize-none focus:border-red-500/50 transition-all"></textarea>
-                            <button type="submit" class="w-full bg-white/5 hover:bg-red-500/20 text-red-400 p-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5 transition-all">
+                            <button type="submit"
+                                    class="w-full bg-white/5 hover:bg-red-500/20 text-red-400 p-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5 transition-all">
                                 🔄 Qayta ishlash
                             </button>
                         </form>
                     </div>
                     {% endif %}
+                    <!-- MIJOZ qismi tugadi -->
+
                 </div>
                 {% endif %}
+                <!-- IN_PROGRESS tugadi -->
+
             </div>
         </div>
     </aside>
 
+    <!-- CHAT -->
     <main class="flex-1 glass-card rounded-[3rem] border border-white/10 shadow-2xl flex flex-col h-full overflow-hidden relative">
 
-        <div class="p-6 bg-white/[0.02] border-b border-white/5 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-600/20">
-                    {% if request.user == room.client %}
-                        {{ room.freelancer.username|slice:":1"|upper }}
-                    {% else %}
-                        {{ room.client.username|slice:":1"|upper }}
-                    {% endif %}
-                </div>
+        <!-- Header -->
+        <div class="p-6 bg-white/[0.02] border-b border-white/5 flex items-center gap-4 shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-600/20">
+                {% if request.user == room.client %}
+                    {{ room.freelancer.username|slice:":1"|upper }}
+                {% else %}
+                    {{ room.client.username|slice:":1"|upper }}
+                {% endif %}
+            </div>
+            <div>
                 <h4 class="text-white font-black text-base">
                     {% if request.user == room.client %}
                         {{ room.freelancer.get_full_name|default:room.freelancer.full_name }}
@@ -274,14 +286,14 @@
                         {{ room.client.get_full_name|default:room.client.full_name }}
                     {% endif %}
                 </h4>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Online</span>
-                    </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Online</span>
                 </div>
             </div>
         </div>
 
+        <!-- Xabarlar -->
         <div id="chatBox" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-950/20">
             {% for msg in messages %}
             <div class="flex {% if msg.sender == request.user %}justify-end{% endif %}">
@@ -307,12 +319,11 @@
             {% endfor %}
         </div>
 
+        <!-- Xabar yuborish -->
         <div class="p-6 bg-white/[0.02] border-t border-white/5 shrink-0">
             {% if request.user == room.freelancer and room.is_blocked %}
             <div class="text-center py-4 px-4 rounded-2xl bg-red-500/10 border border-red-500/20">
-                <span class="text-red-400 text-[10px] font-black uppercase tracking-widest">
-                    🚫 Xabar yubora olmaysiz
-                </span>
+                <span class="text-red-400 text-[10px] font-black uppercase tracking-widest">🚫 Xabar yubora olmaysiz</span>
             </div>
             {% else %}
             <form method="POST" action="{% url 'chat:send_message' room.id %}" class="flex gap-4">
@@ -334,11 +345,9 @@
 </div>
 
 <script>
-// Chatni oxiriga tushirish
 const chatBox = document.getElementById("chatBox");
 chatBox.scrollTop = chatBox.scrollHeight;
 
-// "Enter" bosilganda formani jo'natish
 const msgInput = document.getElementById("messageInput");
 if (msgInput) {
     msgInput.addEventListener("keydown", function(e) {
@@ -349,25 +358,17 @@ if (msgInput) {
     });
 }
 
-// Mijoz tomonidan baholash uchun funksiya
 function setRating(rating) {
     const input = document.getElementById('ratingInput');
-    if(input) {
+    if (input) {
         input.value = rating;
-        const stars = document.querySelectorAll('.star-btn');
-        stars.forEach((star, index) => {
-            if (index < rating) {
-                star.classList.remove('opacity-30');
-                star.classList.add('opacity-100');
-            } else {
-                star.classList.add('opacity-30');
-                star.classList.remove('opacity-100');
-            }
+        document.querySelectorAll('.star-btn').forEach((star, index) => {
+            star.classList.toggle('opacity-100', index < rating);
+            star.classList.toggle('opacity-30', index >= rating);
         });
     }
 }
 
-// Taymer (agar bor bo'lsa)
 {% if time_left %}
 let timerEl = document.getElementById("timer");
 let seconds = {{ time_left.total_seconds|floatformat:0 }};

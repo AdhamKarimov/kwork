@@ -215,6 +215,9 @@ class ChatRoomDetailView(LoginRequiredMixin, View):
             and not room.offers.filter(status=Offer.Status.PENDING).exists()
             and not room.offers.filter(status=Offer.Status.ACCEPTED).exists()
         )
+        is_assigned_freelancer = (
+                room.order.assigned_freelancer == request.user
+        )
 
         return render(request, 'chat/room.html', {
             'room':           room,
@@ -225,6 +228,7 @@ class ChatRoomDetailView(LoginRequiredMixin, View):
             'can_send_offer': can_send_offer,
             'active_submission': active_submission,
             'last_submission': last_submission,
+            'is_assigned_freelancer': is_assigned_freelancer,
         })
 
 
