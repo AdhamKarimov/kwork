@@ -14,7 +14,6 @@ from .utilis import send_email_code
 
 
 class RegisterView(View):
-    """Yangi foydalanuvchini ro'yxatdan o'tkazish."""
 
     def get(self, request):
         if request.user.is_authenticated:
@@ -27,7 +26,6 @@ class RegisterView(View):
         password  = request.POST.get('password', '')
         role      = request.POST.get('role', '')
 
-        # --- Maydon tekshiruvi ---
         if not all([full_name, email, password, role]):
             return render(request, 'accounts/register.html', {
                 'error': 'Barcha maydonlarni to\'ldiring',
@@ -49,7 +47,6 @@ class RegisterView(View):
                 'role': role,
             })
 
-        # --- Timing attack'dan himoya: mavjud bo'lsa ham xuddi shu javob ---
         user_exists = User.objects.filter(email=email).exists()
 
         if not user_exists:
@@ -63,13 +60,11 @@ class RegisterView(View):
             )
             send_email_code(user)
 
-        # Mavjud bo'lsa ham xuddi shu sahifaga yo'naltiramiz
         request.session['pending_email'] = email
         return redirect('accounts:verify_email')
 
 
 class VerifyEmailView(View):
-    """Email tasdiqlash kodi tekshiruvi."""
 
     def get(self, request):
         email = request.session.get('pending_email')
@@ -103,17 +98,15 @@ class VerifyEmailView(View):
             })
 
         if email_code.is_expired():
-            email_code.delete()  # Muddati o'tgan kodni tozalash
+            email_code.delete()
             return render(request, 'accounts/verify_email.html', {
                 'email': email,
                 'error': 'Kod muddati o\'tgan. Qayta yuboring.',
             })
 
-        # Kodni faollashtirish
         email_code.is_activated = True
         email_code.save(update_fields=['is_activated'])
 
-        # Foydalanuvchini faollashtirish
         user.is_active = True
         user.save(update_fields=['is_active'])
 
@@ -125,7 +118,6 @@ class VerifyEmailView(View):
 
 
 class ResendCodeView(View):
-    """Tasdiqlash kodini qayta yuborish."""
 
     @method_decorator(ratelimit(key='ip', rate='3/10m', method='GET', block=True))
     def get(self, request):
@@ -166,24 +158,20 @@ class LoginView(View):
                 'email': email
             })
 
-        # User modelida USERNAME_FIELD = 'email' bo'lgani uchun
-        # authenticate() funksiyasi email va password qabul qiladi
+
         user = authenticate(request, username=email, password=password)
 
         if user is not None:
             if user.is_active:
                 login(request, user)
-                # Foydalanuvchi qayerdan kelgan bo'lsa o'sha yerga (next),
-                # bo'lmasa marketplace'ga yuboramiz
                 next_url = request.GET.get('next', 'marketplace:order_list')
                 return redirect(next_url)
             else:
-                # Agar profil faol bo'lmasa (email tasdiqlanmagan bo'lsa)
                 request.session['pending_email'] = email
                 return render(request, 'accounts/login.html', {
                     'error': 'Hisobingiz faol emas. Iltimos, emailni tasdiqlang.',
                     'email': email,
-                    'is_not_active': True # Template'da tasdiqlash tugmasini chiqarish uchun
+                    'is_not_active': True
                 })
         else:
             return render(request, 'accounts/login.html', {
@@ -197,7 +185,6 @@ def logout_out(request):
 
 
 class ProfileView(View):
-    """Foydalanuvchi profili — o'z profilingiz yoki boshqanikini ko'rish."""
 
     def get(self, request, pk=None):
         if pk:
@@ -208,8 +195,6 @@ class ProfileView(View):
             return redirect('accounts:login')
 
         profile, _ = Profile.objects.get_or_create(user=profile_user)
-
-        # ✅ Review modeli bilan to'g'ri bog'lash
         from reviews.models import Review
         from django.db.models import Avg
 
@@ -236,12 +221,10 @@ class ProfileView(View):
         })
 
 class ProfileEditView(LoginRequiredMixin, View):
-    """Foydalanuvchi o'z profilini tahrirlash."""
     login_url = 'accounts:login'
 
     def get(self, request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
-        # skills JSONField — list shaklida saqlanadi, virgul bilan ko'rsatamiz
         skills_str = ', '.join(profile.skills) if profile.skills else ''
         return render(request, 'accounts/profile_edit.html', {
             'profile': profile,
@@ -251,22 +234,17 @@ class ProfileEditView(LoginRequiredMixin, View):
     def post(self, request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
         user = request.user
-
-        # User maydonlari
         full_name = request.POST.get('full_name', '').strip()
         if full_name:
             user.full_name = full_name
             user.save(update_fields=['full_name'])
 
-        # Avatar
         if 'avatar' in request.FILES:
             user.avatar = request.FILES['avatar']
             user.save(update_fields=['avatar'])
 
-        # Profile maydonlari
         profile.bio = request.POST.get('bio', '').strip() or None
 
-        # Skills: "Python, Django, React" → ['Python', 'Django', 'React']
         skills_raw = request.POST.get('skills', '')
         profile.skills = [
             s.strip() for s in skills_raw.split(',') if s.strip()

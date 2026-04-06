@@ -55,7 +55,6 @@ class Emailcode(models.Model):
     expires_at = models.DateTimeField(null=True,blank=True)
 
     def is_expired(self):
-        """Kod muddati o'tganligini tekshirish."""
         if not self.expires_at:
             return False
         return timezone.now() > self.expires_at

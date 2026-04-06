@@ -10,7 +10,6 @@ def generate_code():
 def send_email_code(user):
     from .models import Emailcode
 
-    # Oldingi kodlarni o'chirish
     Emailcode.objects.filter(user=user, is_activated=False).delete()
 
     code = generate_code()

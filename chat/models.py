@@ -23,7 +23,6 @@ class ChatRoom(models.Model):
 
     @property
     def active_submission(self):
-        """Eng so'nggi PENDING topshiriq."""
         return self.submissions.filter(status=Submission.Status.PENDING).last()
 
 
@@ -109,7 +108,6 @@ class Submission(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
     def approve(self, rating, client_note=''):
-        """Mijoz tasdiqlaydi + baholaydi."""
         from notifications.services import notify_work_approved
 
         self.status      = self.Status.APPROVED
@@ -118,12 +116,10 @@ class Submission(models.Model):
         self.reviewed_at = timezone.now()
         self.save(update_fields=['status', 'rating', 'client_note', 'reviewed_at'])
 
-        # Order yakunlanadi
         order        = self.room.order
         order.status = Order.Status.COMPLETED
         order.save(update_fields=['status'])
 
-        # Profile yangilanadi
         profile = self.freelancer.profile
         profile.completed_jobs_count += 1
 
